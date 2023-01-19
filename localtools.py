@@ -3,9 +3,9 @@
 # file: localtools.py
 # date: 2023 01 17
 # author: Roch Schanen
-# repository: 
-# package: only built-in library
-# comment: (default output to './.output/p.ps')
+# repository: https://github.com/RochSchanen/postscript_dev
+# packages: only built-in libraries
+# comment: (default output to './p.ps')
 
 EOL = "\x0A"    # end-of-line
 SPC = "\x20"    # space character
@@ -56,15 +56,18 @@ def _scl(*X):
 
 class psDoc():
 
-    def __init__(self, Path = "./.output/p.ps", Format = "A4"):
-        # page number
+    # open file, write header, setup font, and fix the origin
+    def __init__(self, Path = "./p.ps", Format = "A4"):
+        # init page counter
         self.n = 1
-        """the symbol @001 will be replaced by the page
-        number value when closing the file """
-        # default document size:
+        # setup document size:
         self.size = {
-            "A5": (420, 595),   # A5 in pixels (72ppi)
             "A4": (595, 842),   # A4 in pixels (72ppi)
+            "A5": (420, 595),   # A5 in pixels (72ppi)
+            # Remarkable 2 parameters are: 
+            # size = 1404, 1872
+            # units = 226.0 / 25.4
+            # use A5 format instead and fit to height
             }[Format]
         # get file handle
         fh = open(Path, 'w')
@@ -72,16 +75,14 @@ class psDoc():
             exitProcess(f"failed to open '{Path}'")
         # register file handle
         self.fh = fh
-        # write file magic (EPSF-3.0 is encapsulated ps)
-        # this is also used to test writing to the file
-        # (early error generation)
-        # fh.write(f"%!PS-Adobe-3.0 EPSF-3.0{EOL}")
-        fh.write(f"%!PS-Adobe-3.0{EOL}")
+        # write file magic
+        # fh.write(f"%!PS-Adobe-3.0 EPSF-3.0{EOL}") # --> .eps
+        fh.write(f"%!PS-Adobe-3.0{EOL}") # --> .ps
         # create buffer
         self.text = ""
-        # write header block:
+        # get geometry
         w, h = self.size
-        # define default header block
+        # define header block
         BLOCK = f"""
         %%BoundingBox: 0 0 {w} {h}
         %%Creator:
@@ -97,14 +98,15 @@ class psDoc():
         % --- SET ORIGIN AT PAGE CENTER ---
         {w/2:.0f} {h/2:.0f} translate
         """
-        # export text
+        # export block
         self.write(BLOCK)
-        # setup constants
+        # setup user constants
         self.LEFT, self.RIGHT  = -w/2/_units, +w/2/_units 
         self.TOP,  self.BOTTOM = +h/2/_units, -h/2/_units 
         # done        
         return
 
+    # add a new page to the document
     def newpage(self, Origin = "tl"):
         # increment page number
         n = self.n + 1
@@ -126,13 +128,13 @@ class psDoc():
         # done
         return        
 
-    # write formatted text block to file/buffer
+    # write block to buffer
     def write(self, Block):
         for l in Block[len(EOL):].split(EOL):
-            # self.fh.write(l.lstrip()+EOL)
             self.text += l.lstrip()+EOL
         return
 
+    # adjust parameters, flush buffer, and close file
     def __del__(self):
         # show last page
         self.write(f"""
@@ -150,6 +152,7 @@ class psDoc():
 
     ### CROSSHAIR ###
 
+    # use the crosshair for scale calibration
     def displayCrosshair(self, size = 50.0):
         # setup
         l, r = -size/2.0, +size/2.0
@@ -198,7 +201,7 @@ class psDoc():
             """)
         return
 
-    ### SINGLE THROUGH LINES ###
+    ### SINGLE THROUGH LINE ###
 
     def hline(self, Position = 0.0):
         # get geometry
@@ -298,7 +301,7 @@ class psDoc():
         i = (Stop-Start)/(nLines-1)     # interval
         # define  block
         BLOCK = f'''
-        % --- MULTIPLE EQUIDISTANT HORIZONTAL LINES ---
+        % --- MULTIPLE EQUIDISTANT VERTICAL LINES ---
         {_scl(s-i)}
         {nLines} {{
         {_scl(i)} add  dup
@@ -311,6 +314,8 @@ class psDoc():
         self.write(BLOCK)
         # done
         return        
+
+    ### SIMPLE GEOMETRICAL OBJECTS ###
 
     def circle(self, x, y, r):
         # define  block
@@ -326,7 +331,7 @@ class psDoc():
     def line(self, x1, y1, x2, y2):
         # define  block
         BLOCK = f'''
-        % --- DRAW LINE ---
+        % --- SINGLE LINE ---
         {_scl(x1, y1, x2, y2)} moveto lineto stroke
         '''
         # export text
@@ -334,14 +339,39 @@ class psDoc():
         # done
         return                
 
-# # default document size (Remarkable 2) in pixels (226ppi):
-# self.size = 1404, 1872
-# _units = 226.0 / 25.4   # remarkable 2
+    def rectangle(self, x1, y1, x2, y2):
+        # define  block
+        BLOCK = f'''
+        % --- SINGLE RECTANGLE ---
+        {_scl(x1, y1)} moveto
+        {_scl(x2, y1)} lineto
+        {_scl(x2, y2)} lineto
+        {_scl(x1, y2)} lineto
+        {_scl(x1, y1)} lineto
+        stroke
+        '''
+        # export text
+        self.write(BLOCK)
+        # done
+        return                
 
-# file: seyesRuledNoteBook.py
+    def box(self, x1, y1, x2, y2):
+        # define  block
+        BLOCK = f'''
+        % --- SINGLE BOX ---
+        {_scl(x1, y1)} moveto
+        {_scl(x2, y1)} lineto
+        {_scl(x2, y2)} lineto
+        {_scl(x1, y2)} lineto
+        {_scl(x1, y1)} lineto
+        fill
+        '''
+        # export text
+        self.write(BLOCK)
+        # done
+        return                
 
 
 if __name__ == "__main__":
 
     p = psDoc()
-
