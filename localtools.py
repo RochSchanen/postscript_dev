@@ -371,7 +371,6 @@ class psDoc():
         # done
         return                
 
-
 if __name__ == "__main__":
 
     p = psDoc()
