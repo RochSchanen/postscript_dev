@@ -1,6 +1,6 @@
 .gitattributes
 
-# .output
+.output
 .local
 
 *.pyc
