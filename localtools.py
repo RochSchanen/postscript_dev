@@ -323,6 +323,17 @@ class psDoc():
         # done
         return        
 
+    def line(self, x1, y1, x2, y2):
+        # define  block
+        BLOCK = f'''
+        % --- DRAW LINE ---
+        {_scl(x1, y1, x2, y2)} moveto lineto stroke
+        '''
+        # export text
+        self.write(BLOCK)
+        # done
+        return                
+
 # # default document size (Remarkable 2) in pixels (226ppi):
 # self.size = 1404, 1872
 # _units = 226.0 / 25.4   # remarkable 2
@@ -332,43 +343,5 @@ class psDoc():
 
 if __name__ == "__main__":
 
-    # from localtools import exitProcess
-    # from localtools import psDoc
+    p = psDoc()
 
-    p = psDoc(Format = "A5")
-
-    ### FRONT PAGE ###
-
-    p.graycolor(0.6)
-    p.thickness(0.599)
-    m = ((p.RIGHT-p.LEFT)-90.0)/2.0
-    l, r, Y = p.LEFT+m, p.RIGHT-m, [50, 80, 110]
-    for y in Y:
-        p.write(f"""
-            {_scl(l, p.TOP-y, r, p.TOP-y)} moveto lineto stroke
-            """)
-
-    ### SEYES RULED PAGES ###
-
-    for n in range(25):
-        p.newpage()
-        p.rgbcolor(*hexcolor("c8c8de"))
-        p.thickness(0.199)
-        # horizontal sub grid
-        topmargin, lines = p.TOP-20, 22*4+2
-        p.hgrid(topmargin, topmargin-(lines-1)*2, lines)
-        p.thickness(0.398)
-        # horizontal main grid
-        topmargin, lines = p.TOP-20-3*2, 22
-        p.hgrid(topmargin, topmargin-(lines-1)*8, lines)
-        # vertical main grid
-        leftmargin, lines = p.LEFT+44, 13
-        p.vgrid(leftmargin, leftmargin+(lines-1)*8, lines)
-        p.rgbcolor(*hexcolor("f6bbcf"))
-        p.vline(p.LEFT+36)
-        p.thickness(0.199)
-        p.graycolor(0.3)
-        p.circle(p.LEFT + 9.0, p.TOP - 55.75, 2.5)
-        p.circle(p.LEFT + 9.0, p.TOP -154.75, 2.5)
-
-    exitProcess("end-of-code.")
