@@ -21,6 +21,16 @@ def exitProcess(em = None):
     print("exit process.")
     return exit()
 
+### COLOR CODE CONVERSION
+
+def hexcolor(code):
+    r = int(code[0:2], 16)
+    g = int(code[2:4], 16)
+    b = int(code[4:6], 16)
+    return r/255, g/255, b/255
+
+### NUMBER FORMATING AND SCALING ###
+
 # fixed point formating function
 # the finest resolution is 0.001 pixel
 # an arbitrary list of arguments can be used
@@ -41,6 +51,8 @@ def _scl(*X):
     for x in X:
         Y.append(x*_units)
     return _fix(*Y)
+
+### POSTSCRIPT DOCUMENT CLASS ###
 
 class psDoc():
 
@@ -77,6 +89,9 @@ class psDoc():
         %%CreationDate: {fulldatetime()}
         %%Pages: 001
 
+        % set defaults font
+        /Times-Roman 10 selectfont
+
         %%Page: 1 1
 
         % --- SET ORIGIN AT PAGE CENTER ---
@@ -84,10 +99,13 @@ class psDoc():
         """
         # export text
         self.write(BLOCK)
+        # setup constants
+        self.LEFT, self.RIGHT  = -w/2/_units, +w/2/_units 
+        self.TOP,  self.BOTTOM = +h/2/_units, -h/2/_units 
         # done        
         return
 
-    def newpage(self):
+    def newpage(self, Origin = "tl"):
         # increment page number
         n = self.n + 1
         # get document size
@@ -117,7 +135,8 @@ class psDoc():
 
     def __del__(self):
         # show last page
-        self.write(f"{SPC}showpage")
+        self.write(f"""
+            showpage""")
         # update page number in header
         self.text = self.text.replace(
             f"%%Pages: 001",
@@ -127,6 +146,56 @@ class psDoc():
         # close file
         self.fh.close()
         # done
+        return
+
+    ### CROSSHAIR ###
+
+    def displayCrosshair(self, size = 50.0):
+        # setup
+        l, r = -size/2.0, +size/2.0
+        b, t = -size/2.0, +size/2.0
+        # define  block
+        BLOCK = f'''
+        % --- CROSSHAIR ---
+        {_scl(l, t, r, t, r, b)}
+        {_scl(l, b)}
+        moveto 3 {{lineto}} repeat closepath stroke
+        gsave 0.3 setlinewidth [1 3 12 3] 0 setdash
+        {_scl(l, 0.0)}
+        {_scl(r, 0.0)}
+        moveto lineto stroke
+        {_scl(0.0, b)}
+        {_scl(0.0, t)}
+        moveto lineto stroke
+        grestore
+        '''
+        # export text
+        self.write(BLOCK)
+        # done
+        return
+
+    ### STYLES ###
+
+    def thickness(self, Value):
+        self.write(f"""
+            % --- SET THICKNESS ---
+            {_scl(Value)} setlinewidth
+            """)
+        return
+
+    # '0.0' is white up to '1.0' which is black
+    def graycolor(self, Value):
+        self.write(f"""
+            % --- SET GRAYSCALE ---
+            {1.0-Value:.2f} dup dup setrgbcolor
+            """)
+        return
+
+    def rgbcolor(self, r, g, b):
+        self.write(f"""
+            % --- SET COLOR ---
+            {r:.2f} {g:.2f} {b:.2f} setrgbcolor
+            """)
         return
 
     ### SINGLE THROUGH LINES ###
@@ -188,7 +257,7 @@ class psDoc():
         t, b = _fix(+h/2.0), _fix(-h/2.0)
         # define  block
         BLOCK = f'''
-        % --- MULTIPLE HORIZONTAL LINES ---
+        % --- MULTIPLE VERTICAL LINES ---
         {_scl(*Positions)} {len(Positions)}
         {{dup {b} exch {t} moveto lineto stroke}} repeat
         '''
@@ -201,20 +270,17 @@ class psDoc():
 
     def hgrid(self, Start, Stop, nLines):
         # get geometry
-        w, h = self.size
-        # convert extrema
-        l, r = _fix(-w/2.0), _fix(+w/2.0)
-        # convert parameters
-        s, e = _scl(Start), _scl(Stop)
-        i = _scl((Stop-Start)/(nLines-1))
+        w, h = self.size                # width, height
+        l, r = -w/2.0, +w/2.0           # left, right
+        s, e = Start, Stop              # start, stop
+        i = (Stop-Start)/(nLines-1)     # interval
         # define  block
         BLOCK = f'''
         % --- MULTIPLE EQUIDISTANT HORIZONTAL LINES ---
-        {s}
+        {_scl(s-i)}
         {nLines} {{
-        {i} add  dup
-        {r} exch dup
-        {l} exch
+        {_scl(i)} add  dup
+        {_fix(r)} exch dup {_fix(l)} exch
         moveto lineto
         stroke}} repeat
         pop
@@ -224,50 +290,45 @@ class psDoc():
         # done
         return        
 
-    def thickness(self, Value):
-        self.write(f"""
-            % --- SET THICKNESS ---
-            {Value:.3f} setlinewidth
-            """)
-        return
-
-    def graycolor(self, Value):
-        self.write(f"""
-            % --- SET COLOR ---
-            {Value:.2f} {Value:.2f} {Value:.2f} setrgbcolor
-            """)
-        return
-
-    # the following is for scaling purposes
-    def displayCrosshair(self, size = 100.0):
-        # setup
-        l, r = -size/2.0, +size/2.0
-        b, t = -size/2.0, +size/2.0
+    def vgrid(self, Start, Stop, nLines):
+        # get geometry
+        w, h = self.size                # width, height
+        t, b = +h/2.0, -h/2.0           # top, bottom
+        s, e = Start, Stop              # start, stop
+        i = (Stop-Start)/(nLines-1)     # interval
         # define  block
         BLOCK = f'''
-        % --- CROSSHAIR ---
-        {_scl(l, t, r, t, r, b)}
-        {_scl(l, b)}
-        moveto 3 {{lineto}} repeat closepath stroke
-        gsave 0.3 setlinewidth [1 3 12 3] 0 setdash
-        {_scl(l, 0.0)}
-        {_scl(r, 0.0)}
-        moveto lineto stroke
-        {_scl(0.0, b)}
-        {_scl(0.0, t)}
-        moveto lineto stroke
-        grestore
+        % --- MULTIPLE EQUIDISTANT HORIZONTAL LINES ---
+        {_scl(s-i)}
+        {nLines} {{
+        {_scl(i)} add  dup
+        dup  {_fix(b)} exch {_fix(t)}
+        moveto lineto
+        stroke}} repeat
+        pop
         '''
         # export text
         self.write(BLOCK)
         # done
-        return
+        return        
+
+    def circle(self, x, y, r):
+        # define  block
+        BLOCK = f'''
+        % --- SINGLE CIRCLE ---
+        {_scl(x, y, r)} 0 360 arc stroke
+        '''
+        # export text
+        self.write(BLOCK)
+        # done
+        return        
 
 # # default document size (Remarkable 2) in pixels (226ppi):
 # self.size = 1404, 1872
 # _units = 226.0 / 25.4   # remarkable 2
 
 # file: seyesRuledNoteBook.py
+
 
 if __name__ == "__main__":
 
@@ -276,19 +337,38 @@ if __name__ == "__main__":
 
     p = psDoc(Format = "A5")
 
-    p.thickness(0.2)
+    ### FRONT PAGE ###
+
     p.graycolor(0.6)
+    p.thickness(0.599)
+    m = ((p.RIGHT-p.LEFT)-90.0)/2.0
+    l, r, Y = p.LEFT+m, p.RIGHT-m, [50, 80, 110]
+    for y in Y:
+        p.write(f"""
+            {_scl(l, p.TOP-y, r, p.TOP-y)} moveto lineto stroke
+            """)
 
-    p.hlines(2, 4, 6)
-    p.vlines(2, 4, 6)
+    ### SEYES RULED PAGES ###
 
-    p.thickness(0.5)
-    p.graycolor(0.2)
-    
-    p.hlines(0, 8)
-    p.vlines(0, 8)
+    for n in range(25):
+        p.newpage()
+        p.rgbcolor(*hexcolor("c8c8de"))
+        p.thickness(0.199)
+        # horizontal sub grid
+        topmargin, lines = p.TOP-20, 22*4+2
+        p.hgrid(topmargin, topmargin-(lines-1)*2, lines)
+        p.thickness(0.398)
+        # horizontal main grid
+        topmargin, lines = p.TOP-20-3*2, 22
+        p.hgrid(topmargin, topmargin-(lines-1)*8, lines)
+        # vertical main grid
+        leftmargin, lines = p.LEFT+44, 13
+        p.vgrid(leftmargin, leftmargin+(lines-1)*8, lines)
+        p.rgbcolor(*hexcolor("f6bbcf"))
+        p.vline(p.LEFT+36)
+        p.thickness(0.199)
+        p.graycolor(0.3)
+        p.circle(p.LEFT + 9.0, p.TOP - 55.75, 2.5)
+        p.circle(p.LEFT + 9.0, p.TOP -154.75, 2.5)
 
     exitProcess("end-of-code.")
-
-    p.newpage()
-    p.displayCrosshair()

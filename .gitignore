@@ -1,6 +1,7 @@
 .gitattributes
 
-# .output/*
+# .output
+.local
 
 *.pyc
 *.npy
