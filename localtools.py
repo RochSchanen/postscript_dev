@@ -57,7 +57,7 @@ def _scl(*X):
 class psDoc():
 
     # open file, write header, setup font, and fix the origin
-    def __init__(self, Path = "./p.ps", Format = "A4"):
+    def __init__(self, Path = "./p.ps", Format = "A4", filetype = "ps"):
         # init page counter
         self.n = 1
         # setup document size:
@@ -67,7 +67,8 @@ class psDoc():
             # Remarkable 2 parameters are: 
             # size = 1404, 1872
             # units = 226.0 / 25.4
-            # use A5 format instead and fit to height
+            # use A5 format instead and use fit-to-height
+            # in remarkable 2 device.
             }[Format]
         # get file handle
         fh = open(Path, 'w')
@@ -75,9 +76,12 @@ class psDoc():
             exitProcess(f"failed to open '{Path}'")
         # register file handle
         self.fh = fh
-        # write file magic
-        # fh.write(f"%!PS-Adobe-3.0 EPSF-3.0{EOL}") # --> .eps
-        fh.write(f"%!PS-Adobe-3.0{EOL}") # --> .ps
+        # write file magic (two file types available)
+        magic = {
+            "eps": f"%!PS-Adobe-3.0 EPSF-3.0{EOL}",
+            "ps" : f"%!PS-Adobe-3.0{EOL}",
+        }
+        fh.write(magic[filetype])
         # create buffer
         self.text = ""
         # get geometry
@@ -186,7 +190,8 @@ class psDoc():
             """)
         return
 
-    # '0.0' is white up to '1.0' which is black
+    # A value of '0.0' is white.
+    # A value of '1.0' is black.
     def graycolor(self, Value):
         self.write(f"""
             % --- SET GRAYSCALE ---
