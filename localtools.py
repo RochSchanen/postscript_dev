@@ -95,7 +95,7 @@ class psDoc():
         %%Pages: 001
 
         % set defaults font
-        /Times-Roman 10 selectfont
+        /Times-Roman 8 selectfont
 
         %%Page: 1 1
 
@@ -370,6 +370,40 @@ class psDoc():
         {_scl(x1, y2)} lineto
         {_scl(x1, y1)} lineto
         fill
+        '''
+        # export text
+        self.write(BLOCK)
+        # done
+        return                
+
+    def pagelink(self, l, r, t, b, page, debug = False):
+        # get geometry
+        w, h = self.size
+        # border style if debug
+        border = f"/Border [0 0 1]" if debug else f"% no border"
+        # define  block
+        BLOCK = f'''
+        % --- PAGE LINK ---
+        mark
+        /Rect [{_scl(l, b)} {_scl(r, t)}]
+        {border}
+        /Page {page}
+        /View [/XYZ 0 {h} null]
+        /Subtype /Link /ANN pdfmark
+        '''
+        # export text
+        self.write(BLOCK)
+        # done
+        return                
+
+    def displaytext(self, l, b, txt, grayvalue = 1.0):
+        # define  block
+        BLOCK = f'''
+        % --- TEXT ---
+        {1.0-grayvalue:.2f} dup dup setrgbcolor
+        {_scl(l, b)} moveto
+        ({txt}) show
+        stroke % quick fix...
         '''
         # export text
         self.write(BLOCK)
