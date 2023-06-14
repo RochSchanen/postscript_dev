@@ -21,6 +21,25 @@ def exitProcess(em = None):
     print("exit process.")
     return exit()
 
+### A-class paper sizes
+
+class AClass():
+
+    def __init__(self):
+        # largest size
+        d = {"A0" : (841, 1189)}
+        # smaller sizes
+        for i in range(10):
+            W, H = d[f"A{i}"]
+            d[f"A{i+1}"] = (round(H/2), W)
+        # register dictionary
+        self.sizes = d
+        # done
+        return
+
+    def PaperSize(self, Format):
+        return self.sizes[Format]
+
 ### COLOR CODE CONVERSION
 
 def hexcolor(code):
@@ -42,6 +61,8 @@ def _fix(*X):
     return S
 
 # default units (pixels per mm)
+# the default postscript document resolution
+# is 72 points per inches
 _units = 72.0 / 25.4
 
 # scaling and formating function
@@ -61,15 +82,9 @@ class psDoc():
         # init page counter
         self.n = 1
         # setup document size:
-        self.size = {
-            "A4": (595, 842),   # A4 in pixels (72ppi)
-            "A5": (420, 595),   # A5 in pixels (72ppi)
-            # Remarkable 2 parameters are: 
-            # size = 1404, 1872
-            # units = 226.0 / 25.4
-            # use A5 format instead and use fit-to-height
-            # in remarkable 2 device.
-            }[Format]
+        w, h = AClass().PaperSize(Format)
+        # convert into inches
+        self.size = w*_units, h*_units
         # get file handle
         fh = open(Path, 'w')
         if fh is None:
