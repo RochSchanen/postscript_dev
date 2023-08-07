@@ -21,6 +21,25 @@ def exitProcess(em = None):
     print("exit process.")
     return exit()
 
+### A-class paper sizes
+
+class AClass():
+
+    def __init__(self):
+        # largest size
+        d = {"A0" : (841, 1189)}
+        # smaller sizes
+        for i in range(10):
+            W, H = d[f"A{i}"]
+            d[f"A{i+1}"] = (round(H/2), W)
+        # register dictionary
+        self.sizes = d
+        # done
+        return
+
+    def PaperSize(self, Format):
+        return self.sizes[Format]
+
 ### COLOR CODE CONVERSION
 
 def hexcolor(code):
@@ -34,7 +53,7 @@ def hexcolor(code):
 # fixed point formating function
 # the finest resolution is 0.001 pixel
 # an arbitrary list of arguments can be used
-def _fix(*X):
+def fix(*X):
     S = ""
     for x in X:
         s = f"{x:+08.3f}"
@@ -42,15 +61,17 @@ def _fix(*X):
     return S
 
 # default units (pixels per mm)
+# the default postscript document resolution
+# is 72 points per inches
 _units = 72.0 / 25.4
 
 # scaling and formating function
 # an arbitrary list of arguments can be used
-def _scl(*X):
+def scl(*X):
     Y = []
     for x in X:
         Y.append(x*_units)
-    return _fix(*Y)
+    return fix(*Y)
 
 ### POSTSCRIPT DOCUMENT CLASS ###
 
@@ -61,15 +82,9 @@ class psDoc():
         # init page counter
         self.n = 1
         # setup document size:
-        self.size = {
-            "A4": (595, 842),   # A4 in pixels (72ppi)
-            "A5": (420, 595),   # A5 in pixels (72ppi)
-            # Remarkable 2 parameters are: 
-            # size = 1404, 1872
-            # units = 226.0 / 25.4
-            # use A5 format instead and use fit-to-height
-            # in remarkable 2 device.
-            }[Format]
+        w, h = AClass().PaperSize(Format)
+        # convert into inches
+        self.size = w*_units, h*_units
         # get file handle
         fh = open(Path, 'w')
         if fh is None:
@@ -88,7 +103,7 @@ class psDoc():
         w, h = self.size
         # define header block
         BLOCK = f"""
-        %%BoundingBox: 0 0 {w} {h}
+        %%BoundingBox: 0 0 {w:.0f} {h:.0f}
         %%Creator:
         %%Title:
         %%CreationDate: {fulldatetime()}
@@ -110,7 +125,7 @@ class psDoc():
         # done        
         return
 
-    # add a new page to the document
+    # add a new page to the document (origin not yet implemented)
     def newpage(self, Origin = "tl"):
         # increment page number
         n = self.n + 1
@@ -140,19 +155,25 @@ class psDoc():
 
     # adjust parameters, flush buffer, and close file
     def __del__(self):
-        # show last page
-        self.write(f"""
-            showpage""")
-        # update page number in header
-        self.text = self.text.replace(
-            f"%%Pages: 001",
-            f"%%Pages: {self.n:03d}")
-        # write buffer to file
-        self.fh.write(self.text)
-        # close file
-        self.fh.close()
+        if self.fh:
+            # show last page
+            self.write(f"""
+                showpage""")
+            # update page number in header
+            self.text = self.text.replace(
+                f"%%Pages: 001",
+                f"%%Pages: {self.n:03d}")
+            # write buffer to file
+            self.fh.write(self.text)
+            # close file
+            self.fh.close()
+            # clear fh handle
+            self.fh = None
         # done
         return
+
+    def close(self):
+        return self.__del__()
 
     ### CROSSHAIR ###
 
@@ -164,15 +185,15 @@ class psDoc():
         # define  block
         BLOCK = f'''
         % --- CROSSHAIR ---
-        {_scl(l, t, r, t, r, b)}
-        {_scl(l, b)}
+        {scl(l, t, r, t, r, b)}
+        {scl(l, b)}
         moveto 3 {{lineto}} repeat closepath stroke
         gsave 0.3 setlinewidth [1 3 12 3] 0 setdash
-        {_scl(l, 0.0)}
-        {_scl(r, 0.0)}
+        {scl(l, 0.0)}
+        {scl(r, 0.0)}
         moveto lineto stroke
-        {_scl(0.0, b)}
-        {_scl(0.0, t)}
+        {scl(0.0, b)}
+        {scl(0.0, t)}
         moveto lineto stroke
         grestore
         '''
@@ -186,7 +207,7 @@ class psDoc():
     def thickness(self, Value):
         self.write(f"""
             % --- SET THICKNESS ---
-            {_scl(Value)} setlinewidth
+            {scl(Value)} setlinewidth
             """)
         return
 
@@ -212,7 +233,7 @@ class psDoc():
         # get geometry
         w, h = self.size
         # convert position to string
-        p = _scl(Position)
+        p = scl(Position)
         # define  block
         BLOCK = f'''
         % --- SINGLE HORIZONTAL LINE ---
@@ -228,7 +249,7 @@ class psDoc():
         # get geometry
         w, h = self.size
         # convert position to string
-        p = _scl(Position)
+        p = scl(Position)
         # define  block
         BLOCK = f'''
         % --- SINGLE VERTICAL LINE ---
@@ -246,11 +267,11 @@ class psDoc():
         # get geometry
         w, h = self.size
         # convert position to string
-        l, r = _fix(-w/2.0), _fix(+w/2.0)
+        l, r = fix(-w/2.0), fix(+w/2.0)
         # define  block
         BLOCK = f'''
         % --- MULTIPLE HORIZONTAL LINES ---
-        {_scl(*Positions)} {len(Positions)}
+        {scl(*Positions)} {len(Positions)}
         {{{r} exch dup {l} exch moveto lineto stroke}} repeat
         '''
         # export text
@@ -262,11 +283,11 @@ class psDoc():
         # get geometry
         w, h = self.size
         # convert position to string
-        t, b = _fix(+h/2.0), _fix(-h/2.0)
+        t, b = fix(+h/2.0), fix(-h/2.0)
         # define  block
         BLOCK = f'''
         % --- MULTIPLE VERTICAL LINES ---
-        {_scl(*Positions)} {len(Positions)}
+        {scl(*Positions)} {len(Positions)}
         {{dup {b} exch {t} moveto lineto stroke}} repeat
         '''
         # export text
@@ -285,10 +306,10 @@ class psDoc():
         # define  block
         BLOCK = f'''
         % --- MULTIPLE EQUIDISTANT HORIZONTAL LINES ---
-        {_scl(s-i)}
+        {scl(s-i)}
         {nLines} {{
-        {_scl(i)} add  dup
-        {_fix(r)} exch dup {_fix(l)} exch
+        {scl(i)} add  dup
+        {fix(r)} exch dup {fix(l)} exch
         moveto lineto
         stroke}} repeat
         pop
@@ -307,10 +328,10 @@ class psDoc():
         # define  block
         BLOCK = f'''
         % --- MULTIPLE EQUIDISTANT VERTICAL LINES ---
-        {_scl(s-i)}
+        {scl(s-i)}
         {nLines} {{
-        {_scl(i)} add  dup
-        dup  {_fix(b)} exch {_fix(t)}
+        {scl(i)} add  dup
+        dup  {fix(b)} exch {fix(t)}
         moveto lineto
         stroke}} repeat
         pop
@@ -326,7 +347,7 @@ class psDoc():
         # define  block
         BLOCK = f'''
         % --- SINGLE CIRCLE ---
-        {_scl(x, y, r)} 0 360 arc stroke
+        {scl(x, y, r)} 0 360 arc stroke
         '''
         # export text
         self.write(BLOCK)
@@ -337,7 +358,7 @@ class psDoc():
         # define  block
         BLOCK = f'''
         % --- SINGLE LINE ---
-        {_scl(x1, y1, x2, y2)} moveto lineto stroke
+        {scl(x1, y1, x2, y2)} moveto lineto stroke
         '''
         # export text
         self.write(BLOCK)
@@ -348,11 +369,11 @@ class psDoc():
         # define  block
         BLOCK = f'''
         % --- SINGLE RECTANGLE ---
-        {_scl(x1, y1)} moveto
-        {_scl(x2, y1)} lineto
-        {_scl(x2, y2)} lineto
-        {_scl(x1, y2)} lineto
-        {_scl(x1, y1)} lineto
+        {scl(x1, y1)} moveto
+        {scl(x2, y1)} lineto
+        {scl(x2, y2)} lineto
+        {scl(x1, y2)} lineto
+        {scl(x1, y1)} lineto
         stroke
         '''
         # export text
@@ -364,11 +385,11 @@ class psDoc():
         # define  block
         BLOCK = f'''
         % --- SINGLE BOX ---
-        {_scl(x1, y1)} moveto
-        {_scl(x2, y1)} lineto
-        {_scl(x2, y2)} lineto
-        {_scl(x1, y2)} lineto
-        {_scl(x1, y1)} lineto
+        {scl(x1, y1)} moveto
+        {scl(x2, y1)} lineto
+        {scl(x2, y2)} lineto
+        {scl(x1, y2)} lineto
+        {scl(x1, y1)} lineto
         fill
         '''
         # export text
@@ -376,16 +397,16 @@ class psDoc():
         # done
         return                
 
-    def pagelink(self, l, r, t, b, page, debug = False):
+    def pagelink(self, l, r, t, b, page, showborder = False):
         # get geometry
         w, h = self.size
         # border style if debug
-        border = f"/Border [0 0 1]" if debug else f"% no border"
+        border = f"/Border [0 0 1]" if showborder else f"% no border"
         # define  block
         BLOCK = f'''
         % --- PAGE LINK ---
         mark
-        /Rect [{_scl(l, b)} {_scl(r, t)}]
+        /Rect [{scl(l, b)} {scl(r, t)}]
         {border}
         /Page {page}
         /View [/XYZ 0 {h} null]
@@ -401,7 +422,7 @@ class psDoc():
         BLOCK = f'''
         % --- TEXT ---
         {1.0-grayvalue:.2f} dup dup setrgbcolor
-        {_scl(l, b)} moveto
+        {scl(l, b)} moveto
         ({txt}) show
         stroke % quick fix...
         '''
