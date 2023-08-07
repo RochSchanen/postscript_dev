@@ -1,4 +1,0 @@
-#!/bin/bash
-gs -sOutputFile=p.pdf -dNOPAUSE -dBATCH -sPAPERSIZE=a5 -sDEVICE=pdfwrite -dSAFER p.ps
-cp p.pdf "/home/roch/Dropbox/Tranfer Remarkable/p.pdf"
-
