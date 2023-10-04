@@ -1,3 +1,8 @@
 #!/bin/bash
-gs -sOutputFile=$1.pdf -dNOPAUSE -dBATCH -sPAPERSIZE=a5 -sDEVICE=pdfwrite -dSAFER $1.ps
+python3 DoubleSidedSeyes.py
+
+# gs -sOutputFile=doublesidedseyes.pdf -dNOPAUSE -dBATCH -g4422x5924 -sDEVICE=pdfwrite -dSAFER doublesidedseyes.ps
+gs -sOutputFile=doublesidedseyes.pdf -dNOPAUSE -dBATCH -sPAPERSIZE=a5 -sDEVICE=pdfwrite -dSAFER doublesidedseyes.ps
+# gs -sOutputFile=doublesidedseyes.pdf -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dSAFER doublesidedseyes.ps
+# gs -sOutputFile=$1.pdf -dNOPAUSE -dBATCH -sPAPERSIZE=a5 -sDEVICE=pdfwrite -dSAFER $1.ps
 # cp p.pdf "/home/roch/Dropbox/Tranfer Remarkable/p.pdf"

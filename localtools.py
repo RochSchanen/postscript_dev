@@ -21,7 +21,7 @@ def exitProcess(em = None):
     print("exit process.")
     return exit()
 
-### A-class paper sizes
+### A-class paper sizes (millimeters)
 
 class AClass():
 
@@ -81,9 +81,19 @@ class psDoc():
     def __init__(self, Path = "./p.ps", Format = "A4", filetype = "ps"):
         # init page counter
         self.n = 1
-        # setup document size:
-        w, h = AClass().PaperSize(Format)
-        # convert into inches
+        # setup document size
+        w, h = None, None
+        # try AClass document size:
+        if Format in AClass().sizes.keys(): 
+            w, h = AClass().PaperSize(Format)
+        # try user size
+        if "x" in Format.lower():
+            w, h = (float(s) for s in Format.split("x"))
+            print(w, h)
+        # check parsing result
+        if (w, h) == (None, None):
+            exitProcess("Document format parsing failed")
+        # convert into points, inches
         self.size = w*_units, h*_units
         # get file handle
         fh = open(Path, 'w')
@@ -101,6 +111,7 @@ class psDoc():
         self.text = ""
         # get geometry
         w, h = self.size
+        print(w, h)
         # define header block
         BLOCK = f"""
         %%BoundingBox: 0 0 {w:.0f} {h:.0f}
@@ -110,7 +121,8 @@ class psDoc():
         %%Pages: 001
 
         % set defaults font
-        /Times-Roman 8 selectfont
+        % /Times-Roman 8 selectfont
+        /Courier 12 selectfont
 
         %%Page: 1 1
 
@@ -120,8 +132,8 @@ class psDoc():
         # export block
         self.write(BLOCK)
         # setup user constants
-        self.LEFT, self.RIGHT  = -w/2/_units, +w/2/_units 
-        self.TOP,  self.BOTTOM = +h/2/_units, -h/2/_units 
+        self.LEFT, self.RIGHT  = -w/2.0/_units, +w/2.0/_units 
+        self.TOP,  self.BOTTOM = +h/2.0/_units, -h/2.0/_units 
         # done        
         return
 
@@ -229,7 +241,8 @@ class psDoc():
 
     ### SINGLE THROUGH LINE ###
 
-    def hline(self, Position = 0.0):
+    def hline(self, Position = 0.0, lm = 0, rm = 0):
+        # l, r margins are null by default
         # get geometry
         w, h = self.size
         # convert position to string
@@ -237,7 +250,7 @@ class psDoc():
         # define  block
         BLOCK = f'''
         % --- SINGLE HORIZONTAL LINE ---
-        {+w/2.0} {p} {-w/2.0} {p}
+        {+w/2.0-rm*_units} {p} {-w/2.0+lm*_units} {p}
         moveto lineto stroke
         '''
         # export text
@@ -245,7 +258,8 @@ class psDoc():
         # done
         return
 
-    def vline(self, Position = 0.0):
+    def vline(self, Position = 0.0, tm = 0, bm = 0):
+        # t, b margins are null by default
         # get geometry
         w, h = self.size
         # convert position to string
@@ -253,7 +267,7 @@ class psDoc():
         # define  block
         BLOCK = f'''
         % --- SINGLE VERTICAL LINE ---
-        {p} {+h/2.0} {p} {-h/2.0}
+        {p} {+h/2.0-tm*_units} {p} {-h/2.0+bm*_units}
         moveto lineto stroke
         '''
         # export text
@@ -263,11 +277,12 @@ class psDoc():
 
     ### MULTIPLE THROUGH LINES ###
 
-    def hlines(self, *Positions):
+    def hlines(self, *Positions, lm = 0, rm = 0):
         # get geometry
         w, h = self.size
         # convert position to string
-        l, r = fix(-w/2.0), fix(+w/2.0)
+        l = fix(-w/2.0+lm*_units)
+        r = fix(+w/2.0-rm*_units)
         # define  block
         BLOCK = f'''
         % --- MULTIPLE HORIZONTAL LINES ---
@@ -279,11 +294,12 @@ class psDoc():
         # done
         return
 
-    def vlines(self, *Positions):
+    def vlines(self, *Positions, tm = 0, bm = 0):
         # get geometry
         w, h = self.size
         # convert position to string
-        t, b = fix(+h/2.0), fix(-h/2.0)
+        t = fix(+h/2.0-tm*_units)
+        b = fix(-h/2.0+bm*_units)
         # define  block
         BLOCK = f'''
         % --- MULTIPLE VERTICAL LINES ---
@@ -297,10 +313,11 @@ class psDoc():
 
     ### MULTIPLE EQUIDISTANT THROUGH LINES ###
 
-    def hgrid(self, Start, Stop, nLines):
+    def hgrid(self, Start, Stop, nLines, lm = 0, rm = 0):
         # get geometry
         w, h = self.size                # width, height
-        l, r = -w/2.0, +w/2.0           # left, right
+        l = -w/2.0 + lm*_units          # left
+        r = +w/2.0 - rm*_units          # right
         s, e = Start, Stop              # start, stop
         i = (Stop-Start)/(nLines-1)     # interval
         # define  block
@@ -319,10 +336,10 @@ class psDoc():
         # done
         return        
 
-    def vgrid(self, Start, Stop, nLines):
+    def vgrid(self, Start, Stop, nLines, tm = 0, bm = 0):
         # get geometry
         w, h = self.size                # width, height
-        t, b = +h/2.0, -h/2.0           # top, bottom
+        t, b = +h/2.0-tm, -h/2.0+bm     # top, bottom
         s, e = Start, Stop              # start, stop
         i = (Stop-Start)/(nLines-1)     # interval
         # define  block
@@ -417,14 +434,29 @@ class psDoc():
         # done
         return                
 
-    def displaytext(self, l, b, txt, grayvalue = 1.0):
+    def text(self, l, b, txt):
         # define  block
         BLOCK = f'''
         % --- TEXT ---
-        {1.0-grayvalue:.2f} dup dup setrgbcolor
         {scl(l, b)} moveto
         ({txt}) show
         stroke % quick fix...
+        '''
+        # export text
+        self.write(BLOCK)
+        # done
+        return                
+
+    def vtext(self, l, b, txt):
+        # define  block
+        BLOCK = f'''
+        % --- TEXT ---
+        gsave
+        {scl(l, b)} moveto
+        90 rotate
+        ({txt}) show
+        % stroke % quick fix...
+        grestore
         '''
         # export text
         self.write(BLOCK)
