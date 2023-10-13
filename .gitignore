@@ -1,7 +1,10 @@
 .gitattributes
-
 .output
 .local
 
+build
+postscript.egg-info
+
 *.pyc
 *.npy
+

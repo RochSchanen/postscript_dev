@@ -1,30 +1,57 @@
 #!/usr/bin/python3
-# content: local tools
-# file: localtools.py
-# date: 2023 01 17
+# file: postscript.py
+# content: homemade postscript package
+# date: 2023 10 13
 # author: Roch Schanen
 # repository: https://github.com/RochSchanen/postscript_dev
-# packages: only built-in libraries
-# comment: (default output to './p.ps')
+# packages:
+# comment:
+
+# set debug flags to verbose
+DEBUG = [
+    # "NONE",
+    "ALL",
+    # "SHOW_SIZE",
+    ]
+
+# debug flags check
+def debug(*flags):
+    if "NONE" in DEBUG: return False
+    if "ALL"  in DEBUG: return True
+    for f in flags:
+        if f in DEBUG:
+            # enabled
+            return True
+    # no valid flags
+    if flags:
+        return False
+    # empty parameter -> always valid
+    # except if 'NONE' is explicit
+    return True
 
 EOL = "\x0A"    # end-of-line
 SPC = "\x20"    # space character
 
+# returns a formatted date string
+# which includes the date and the time
 def fulldatetime():
     from time import strftime 
     return strftime("%A, %d %b %Y at %H:%M:%S")
 
-def exitProcess(em = None):
+# system exit with message
+# easy to pass in a return line
+def exitProcess(message = ""):
     from sys import exit
-    if em is None: em = "done"
-    print(em)
-    print("exit process.")
+    if debug():
+        if message:
+            print(message)
+        print("exiting...")
     return exit()
 
-### A-class paper sizes (millimeters)
-
+# A-class paper sizes class
+# values are given in millimetres
 class AClass():
-
+    # build the size dictionary
     def __init__(self):
         # largest size
         d = {"A0" : (841, 1189)}
@@ -36,22 +63,20 @@ class AClass():
         self.sizes = d
         # done
         return
+    # return size from name: "A0" to "A9"
+    def PaperSize(self, name):
+        return self.sizes[name]
 
-    def PaperSize(self, Format):
-        return self.sizes[Format]
-
-### COLOR CODE CONVERSION
-
+# string to float rgb colour conversion
+# (give "FFFFFF", returns 1.0, 1.0, 1.0)
 def hexcolor(code):
     r = int(code[0:2], 16)
     g = int(code[2:4], 16)
     b = int(code[4:6], 16)
     return r/255, g/255, b/255
 
-### NUMBER FORMATING AND SCALING ###
-
-# fixed point formating function
-# the finest resolution is 0.001 pixel
+# fixed point formatting function
+# the finest resolution is set to 0.001 point
 # an arbitrary list of arguments can be used
 def fix(*X):
     S = ""
@@ -60,58 +85,82 @@ def fix(*X):
         S = f"{S} {s}" if S else s
     return S
 
-# default units (pixels per mm)
-# the default postscript document resolution
-# is 72 points per inches
+# default units (points per mm)
 _units = 72.0 / 25.4
+# note: there is 72 points per inches
+# by default in a postscript file.
+# the size dimensions are expected
+# to be given in points. Therefore,
+# you should multiply millimetres by
+# '_units' to get a value in points.
 
-# scaling and formating function
-# an arbitrary list of arguments can be used
-def scl(*X):
+# scale and format:
+def sca(*X):
     Y = []
     for x in X:
         Y.append(x*_units)
     return fix(*Y)
+# note: an arbitrary length list
+# of arguments can be given. each
+# elements is scaled and formatted
+# and returned as a tuple.
 
-### POSTSCRIPT DOCUMENT CLASS ###
-
-class psDoc():
+# postscript document class
+class document():
 
     # open file, write header, setup font, and fix the origin
-    def __init__(self, Path = "./p.ps", Format = "A4", filetype = "ps"):
-        # init page counter
+    def __init__(self,
+            Path    = "p",  # default filename
+            Size    = "A4", # default page size
+            Type    = "ps", # ps or eps
+        ):
+        
+        # initialise page counter
         self.n = 1
+        
         # setup document size
         w, h = None, None
+        
         # try AClass document size:
-        if Format in AClass().sizes.keys(): 
-            w, h = AClass().PaperSize(Format)
-        # try user size
-        if "x" in Format.lower():
-            w, h = (float(s) for s in Format.split("x"))
-            print(w, h)
+        if Size in AClass().sizes.keys(): 
+            w, h = AClass().PaperSize(Size)
+        
+        # parse user size (for example "200x300")
+        if "x" in Size.lower():
+            w, h = (float(s) for s in Size.split("x"))
         # check parsing result
         if (w, h) == (None, None):
-            exitProcess("Document format parsing failed")
-        # convert into points, inches
+            exitProcess("Document format parsing failed.")
+        
+        # convert record size in points
+        # (the natural units of postscript)
         self.size = w*_units, h*_units
+        
         # get file handle
-        fh = open(Path, 'w')
+        fh = open(f"{Path}.{Type}", 'w')
         if fh is None:
-            exitProcess(f"failed to open '{Path}'")
+            exitProcess(f"failed to open '{Path}'.")
         # register file handle
         self.fh = fh
+        
         # write file magic (two file types available)
         magic = {
             "eps": f"%!PS-Adobe-3.0 EPSF-3.0{EOL}",
             "ps" : f"%!PS-Adobe-3.0{EOL}",
         }
-        fh.write(magic[filetype])
+        fh.write(magic[Type])
+        
         # create buffer
         self.text = ""
+        
         # get geometry
         w, h = self.size
-        print(w, h)
+        if debug("SHOW_SIZE"):
+            print(f"{w:.0f} X {h:.0f} Points (as defined in the postscript header)")
+            print(f"{w:.3f} X {h:.3f} Points (w, h)")
+            print(f"{w/_units:.3f} X {h/_units:.3f} Millimetres (w, h)")    
+            print(f"{w/72.0:.3f} X {h/72.0:.3f} Inches (w, h)")    
+
         # define header block
         BLOCK = f"""
         %%BoundingBox: 0 0 {w:.0f} {h:.0f}
@@ -121,7 +170,6 @@ class psDoc():
         %%Pages: 001
 
         % set defaults font
-        % /Times-Roman 8 selectfont
         /Courier 12 selectfont
 
         %%Page: 1 1
@@ -129,20 +177,30 @@ class psDoc():
         % --- SET ORIGIN AT PAGE CENTER ---
         {w/2:.0f} {h/2:.0f} translate
         """
+        # some other font(s) available:
+        # /Times-Roman 8 selectfont
+
         # export block
         self.write(BLOCK)
-        # setup user constants
+
+        # constants for the user
         self.LEFT, self.RIGHT  = -w/2.0/_units, +w/2.0/_units 
         self.TOP,  self.BOTTOM = +h/2.0/_units, -h/2.0/_units 
+        # note: the origin (point 0 0) is at the centre of the page
+
         # done        
         return
 
-    # add a new page to the document (origin not yet implemented)
+    # add a new page to the document
+    # (origin selection not yet implemented)
     def newpage(self, Origin = "tl"):
+        
         # increment page number
         n = self.n + 1
+        
         # get document size
         w, h = self.size
+        
         # define newpage block
         BLOCK = f"""
         showpage
@@ -152,10 +210,13 @@ class psDoc():
         % --- SET ORIGIN AT PAGE CENTER ---
         {w/2:.0f} {h/2:.0f} translate
         """        
+        
         # export text
         self.write(BLOCK)
+        
         # update page counter
         self.n = n
+        
         # done
         return        
 
@@ -165,7 +226,13 @@ class psDoc():
             self.text += l.lstrip()+EOL
         return
 
-    # adjust parameters, flush buffer, and close file
+    # the closing of the document
+    # is automatically done on
+    # deleting the class (exit):
+    #
+    # adjust number of pages
+    # flush the buffer
+    # and close the file
     def __del__(self):
         if self.fh:
             # show last page
@@ -187,39 +254,51 @@ class psDoc():
     def close(self):
         return self.__del__()
 
-    ### CROSSHAIR ###
+    ##################
+    ### CROSS HAIR ###
+    ##################
 
-    # use the crosshair for scale calibration
+    # cross hair element is used for debugging
+    # full width and full height should be 10 cm
+    # each on the screen/paper
+
+    # use the cross hair to calibrate the scaling
     def displayCrosshair(self, size = 50.0):
+
         # setup
         l, r = -size/2.0, +size/2.0
         b, t = -size/2.0, +size/2.0
+
         # define  block
         BLOCK = f'''
         % --- CROSSHAIR ---
-        {scl(l, t, r, t, r, b)}
-        {scl(l, b)}
+        {sca(l, t, r, t, r, b)}
+        {sca(l, b)}
         moveto 3 {{lineto}} repeat closepath stroke
         gsave 0.3 setlinewidth [1 3 12 3] 0 setdash
-        {scl(l, 0.0)}
-        {scl(r, 0.0)}
+        {sca(l, 0.0)}
+        {sca(r, 0.0)}
         moveto lineto stroke
-        {scl(0.0, b)}
-        {scl(0.0, t)}
+        {sca(0.0, b)}
+        {sca(0.0, t)}
         moveto lineto stroke
         grestore
         '''
+
         # export text
         self.write(BLOCK)
+
         # done
         return
 
+    ##############
     ### STYLES ###
+    ##############
 
     def thickness(self, Value):
         self.write(f"""
             % --- SET THICKNESS ---
-            {scl(Value)} setlinewidth
+            {sca(Value)} setlinewidth
             """)
         return
 
@@ -239,14 +318,16 @@ class psDoc():
             """)
         return
 
-    ### SINGLE THROUGH LINE ###
+    #############
+    ### LINES ###
+    #############
 
     def hline(self, Position = 0.0, lm = 0, rm = 0):
         # l, r margins are null by default
         # get geometry
         w, h = self.size
         # convert position to string
-        p = scl(Position)
+        p = sca(Position)
         # define  block
         BLOCK = f'''
         % --- SINGLE HORIZONTAL LINE ---
@@ -263,7 +344,7 @@ class psDoc():
         # get geometry
         w, h = self.size
         # convert position to string
-        p = scl(Position)
+        p = sca(Position)
         # define  block
         BLOCK = f'''
         % --- SINGLE VERTICAL LINE ---
@@ -275,8 +356,6 @@ class psDoc():
         # done
         return
 
-    ### MULTIPLE THROUGH LINES ###
-
     def hlines(self, *Positions, lm = 0, rm = 0):
         # get geometry
         w, h = self.size
@@ -286,7 +365,7 @@ class psDoc():
         # define  block
         BLOCK = f'''
         % --- MULTIPLE HORIZONTAL LINES ---
-        {scl(*Positions)} {len(Positions)}
+        {sca(*Positions)} {len(Positions)}
         {{{r} exch dup {l} exch moveto lineto stroke}} repeat
         '''
         # export text
@@ -303,15 +382,13 @@ class psDoc():
         # define  block
         BLOCK = f'''
         % --- MULTIPLE VERTICAL LINES ---
-        {scl(*Positions)} {len(Positions)}
+        {sca(*Positions)} {len(Positions)}
         {{dup {b} exch {t} moveto lineto stroke}} repeat
         '''
         # export text
         self.write(BLOCK)
         # done
         return
-
-    ### MULTIPLE EQUIDISTANT THROUGH LINES ###
 
     def hgrid(self, Start, Stop, nLines, lm = 0, rm = 0):
         # get geometry
@@ -323,9 +400,9 @@ class psDoc():
         # define  block
         BLOCK = f'''
         % --- MULTIPLE EQUIDISTANT HORIZONTAL LINES ---
-        {scl(s-i)}
+        {sca(s-i)}
         {nLines} {{
-        {scl(i)} add  dup
+        {sca(i)} add  dup
         {fix(r)} exch dup {fix(l)} exch
         moveto lineto
         stroke}} repeat
@@ -345,9 +422,9 @@ class psDoc():
         # define  block
         BLOCK = f'''
         % --- MULTIPLE EQUIDISTANT VERTICAL LINES ---
-        {scl(s-i)}
+        {sca(s-i)}
         {nLines} {{
-        {scl(i)} add  dup
+        {sca(i)} add  dup
         dup  {fix(b)} exch {fix(t)}
         moveto lineto
         stroke}} repeat
@@ -358,39 +435,45 @@ class psDoc():
         # done
         return        
 
-    ### SIMPLE GEOMETRICAL OBJECTS ###
-
-    def circle(self, x, y, r):
-        # define  block
-        BLOCK = f'''
-        % --- SINGLE CIRCLE ---
-        {scl(x, y, r)} 0 360 arc stroke
-        '''
-        # export text
-        self.write(BLOCK)
-        # done
-        return        
-
     def line(self, x1, y1, x2, y2):
         # define  block
         BLOCK = f'''
         % --- SINGLE LINE ---
-        {scl(x1, y1, x2, y2)} moveto lineto stroke
+        {sca(x1, y1, x2, y2)} moveto lineto stroke
         '''
         # export text
         self.write(BLOCK)
         # done
         return                
 
+    ###############
+    ### CIRCLES ###
+    ###############
+
+    def circle(self, x, y, r):
+        # define  block
+        BLOCK = f'''
+        % --- SINGLE CIRCLE ---
+        {sca(x, y, r)} 0 360 arc stroke
+        '''
+        # export text
+        self.write(BLOCK)
+        # done
+        return        
+
+    ##################
+    ### RECTANGLES ###
+    ##################
+
     def rectangle(self, x1, y1, x2, y2):
         # define  block
         BLOCK = f'''
         % --- SINGLE RECTANGLE ---
-        {scl(x1, y1)} moveto
-        {scl(x2, y1)} lineto
-        {scl(x2, y2)} lineto
-        {scl(x1, y2)} lineto
-        {scl(x1, y1)} lineto
+        {sca(x1, y1)} moveto
+        {sca(x2, y1)} lineto
+        {sca(x2, y2)} lineto
+        {sca(x1, y2)} lineto
+        {sca(x1, y1)} lineto
         stroke
         '''
         # export text
@@ -402,11 +485,11 @@ class psDoc():
         # define  block
         BLOCK = f'''
         % --- SINGLE BOX ---
-        {scl(x1, y1)} moveto
-        {scl(x2, y1)} lineto
-        {scl(x2, y2)} lineto
-        {scl(x1, y2)} lineto
-        {scl(x1, y1)} lineto
+        {sca(x1, y1)} moveto
+        {sca(x2, y1)} lineto
+        {sca(x2, y2)} lineto
+        {sca(x1, y2)} lineto
+        {sca(x1, y1)} lineto
         fill
         '''
         # export text
@@ -414,31 +497,15 @@ class psDoc():
         # done
         return                
 
-    def pagelink(self, l, r, t, b, page, showborder = False):
-        # get geometry
-        w, h = self.size
-        # border style if debug
-        border = f"/Border [0 0 1]" if showborder else f"% no border"
-        # define  block
-        BLOCK = f'''
-        % --- PAGE LINK ---
-        mark
-        /Rect [{scl(l, b)} {scl(r, t)}]
-        {border}
-        /Page {page}
-        /View [/XYZ 0 {h} null]
-        /Subtype /Link /ANN pdfmark
-        '''
-        # export text
-        self.write(BLOCK)
-        # done
-        return                
+    ############
+    ### TEXT ###
+    ############
 
-    def text(self, l, b, txt):
+    def text(self, x, y, txt):
         # define  block
         BLOCK = f'''
         % --- TEXT ---
-        {scl(l, b)} moveto
+        {sca(x, y)} moveto
         ({txt}) show
         stroke % quick fix...
         '''
@@ -447,12 +514,15 @@ class psDoc():
         # done
         return                
 
-    def vtext(self, l, b, txt):
+    def htext(self, x, y, txt):
+        return self.text(x, y, txt)
+
+    def vtext(self, x, y, txt):
         # define  block
         BLOCK = f'''
         % --- TEXT ---
         gsave
-        {scl(l, b)} moveto
+        {sca(x, y)} moveto
         90 rotate
         ({txt}) show
         % stroke % quick fix...
@@ -463,6 +533,37 @@ class psDoc():
         # done
         return                
 
+    # there is some issue with the paper
+    # orientation after using 'vtext()'.
+    # should I use 'stroke' or not?
+
+    ############
+    ### META ###
+    ############
+
+    def pagelink(self, l, r, t, b, page, showborder = False):
+        # get geometry
+        w, h = self.size
+        # border style if debug
+        border = f"/Border [0 0 1]" if showborder else f"% no border"
+        # define  block
+        BLOCK = f'''
+        % --- PAGE LINK ---
+        mark
+        /Rect [{sca(l, b)} {sca(r, t)}]
+        {border}
+        /Page {page}
+        /View [/XYZ 0 {h} null]
+        /Subtype /Link /ANN pdfmark
+        '''
+        # export text
+        self.write(BLOCK)
+        # done
+        return                
+
 if __name__ == "__main__":
 
-    p = psDoc()
+    p = document(Size = "A4")
+    p.displayCrosshair()
+
+    # done

@@ -1,11 +1,16 @@
 # file: seyesRuledNoteBook.py
 
-from localtools import exitProcess
-from localtools import hexcolor
-from localtools import psDoc
+import postscript as ps
+p = ps.document()
+
+
+exit()
+
+# from postscript import hexcolor
+# from postscript import document
 
 # create document
-p = psDoc("./notebook.ps", Format = "A5")
+p = ps.document("./notebook.ps", Size = "A5")
 
 # get geometry
 l, r, t, b = p.LEFT, p.RIGHT, p.TOP, p.BOTTOM
@@ -98,5 +103,3 @@ for n in range(3, 25):
     
     # display page number
     p.displaytext(r-5, t-6, f"{n}", 0.6)
-
-exitProcess("end-of-code.")
