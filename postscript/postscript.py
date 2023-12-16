@@ -221,7 +221,17 @@ class document():
         
         # done
         return        
-
+    
+    # BLOCKs are defined using the
+    # following convenient formatting:
+    
+    # BLOCK = """
+    # content line 1
+    # content line 2
+    # ...
+    # content last line
+    # """
+    
     # write block to buffer
     def write(self, Block):
         for l in Block[len(EOL):].split(EOL):
