@@ -110,7 +110,7 @@ class document():
 
     # open file, write header, setup font, and fix the origin
     def __init__(self,
-            Path    = "p",  # default filename
+            Path    = "out",  # default filename
             Size    = "A4", # default page size
             Type    = "ps", # ps or eps
         ):
@@ -128,11 +128,12 @@ class document():
         # parse user size (for example "200x300")
         if "x" in Size.lower():
             w, h = (float(s) for s in Size.split("x"))
+            
         # check parsing result
         if (w, h) == (None, None):
-            exitProcess("Document format parsing failed.")
+            exitProcess("Document size parsing failed.")
         
-        # convert record size in points
+        # convert  and record size in points
         # (the natural units of postscript)
         self.size = w*_units, h*_units
         
@@ -140,6 +141,7 @@ class document():
         fh = open(f"{Path}.{Type}", 'w')
         if fh is None:
             exitProcess(f"failed to open '{Path}'.")
+
         # register file handle
         self.fh = fh
         
