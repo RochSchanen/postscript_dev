@@ -271,8 +271,8 @@ class document():
     ##################
 
     # cross hair element is used for debugging
-    # full width and full height should be 10 cm
-    # each on the screen/paper
+    # full width and full height should be 5 cm
+    # either on the screen or paper
 
     # use the cross hair to calibrate the scaling
     def displayCrosshair(self, size = 50.0):
