@@ -20,10 +20,11 @@ def seyes(lm = 0, rm = 0, tm = 0, bm = 0, vn = 13):
     leftmargin, lines = l+44+8*2, vn-2
     p.vgrid(leftmargin, leftmargin+(lines-1)*8, lines, tm, bm)
     # vertical margin
-    # p.rgbcolor(*hexcolor("f6bbcf"))
-    p.vline(l+36, tm, bm)
+    p.rgbcolor(*hexcolor("f6bbcf"))
+    # p.vline(l+36, tm, bm)
+    p.vline(l+36-5, tm, bm) # shift left 5mm from the standard position
     # second vertical margin
-    # p.rgbcolor(*hexcolor("f6bbcf"))
+    p.rgbcolor(*hexcolor("f6bbcf"))
     p.vline(l+36+8*2, tm, bm)
     # done
     return
@@ -78,11 +79,13 @@ def rightIndent(pos, w, h):
     # done
     return
 
-p = document("./CahierDeTexte", Size = "A5", Type = "ps")
+p = document("./tmp", Size = "A5", Type = "ps")
 
 l, r, t, b, w = p.LEFT, p.RIGHT, p.TOP, p.BOTTOM, 0.099
 
-for page in range(7):
+n = 7
+
+for page in range(n):
 
     if page: p.newpage()
 
@@ -93,21 +96,29 @@ for page in range(7):
 
     page_border(6, w/3.0)
 
-    for i in range(1, 7-page):
-        rightIndent((t-b)/7*(i-7/2), 8, 8)
+    h = (t-b)/n
+    for i in range(1, n-page):
+        rightIndent(h*(i-n/2), 8, 8)
 
     p.graycolor(0.5)
     for i, txt in zip(
-            range(0, 7-page),
+            range(0, n-page),
             ["Dimanche", "Samedi",
              "Vendredi", "Jeudi",
              "Mercredi", "Mardi",
              "Lundi"]):
-        p.vtext(r-3, (t-b)/7*(i-7/2)+6, txt)
+        
+        x, y = r-3, h*(i-n/2)
+        
+        # create links
+        p.pagelink(r-8, r, y+h*0.05, y+h*0.95, n-i)
 
-    p.rgbcolor(*hexcolor("c8c8de"))
-    p.thickness(w)
-    leftholes()
+        # display text
+        p.vtext(x, y+6, txt)
+
+    # p.rgbcolor(*hexcolor("c8c8de"))
+    # p.thickness(w)
+    # leftholes()
 
 p.graycolor(1.0)
 
