@@ -1,11 +1,5 @@
 #!/bin/bash
-# python3 DoubleSidedSeyes.py
-# gs -sOutputFile=doublesidedseyes.pdf -dNOPAUSE -dBATCH -g4422x5924 -sDEVICE=pdfwrite -dSAFER doublesidedseyes.ps
-# gs -sOutputFile=doublesidedseyes.pdf -dNOPAUSE -dBATCH -sPAPERSIZE=a5 -sDEVICE=pdfwrite -dSAFER doublesidedseyes.ps
-# gs -sOutputFile=doublesidedseyes.pdf -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dSAFER doublesidedseyes.ps
+python3 DoubleSidedSeyes.py
 # gs -sOutputFile=$1.pdf -dNOPAUSE -dBATCH -sPAPERSIZE=a5 -sDEVICE=pdfwrite -dSAFER $1.ps
 # cp p.pdf "/home/roch/Dropbox/Tranfer Remarkable/p.pdf"
-# gs -sOutputFile=CahierDeTexte.pdf -dNOPAUSE -dBATCH -sPAPERSIZE=a5 -sDEVICE=pdfwrite -dSAFER CahierDeTexte.ps
-# gs -sOutputFile=tmp.pdf -dNOPAUSE -dBATCH -sPAPERSIZE=a5 -dAutoRotatePages=/None -c "<</Orientation 1>> setpagedevice" -sDEVICE=pdfwrite -dSAFER tmp.ps
-# gs -sOutputFile=tmp.pdf -dNOPAUSE -dBATCH -sPAPERSIZE=a5 -dAutoRotatePages=/None -sDEVICE=pdfwrite -dSAFER tmp.ps
 gs -sOutputFile=tmp.pdf -dNOPAUSE -dBATCH -sPAPERSIZE=a5 -dAutoRotatePages=/None -sDEVICE=pdfwrite -dSAFER tmp.ps

@@ -81,7 +81,7 @@ def rightIndent(pos, w, h):
 
 p = document("./tmp", Size = "A5", Type = "ps")
 
-l, r, t, b, w = p.LEFT, p.RIGHT, p.TOP, p.BOTTOM, 0.099
+l, r, t, b, w = p.LEFT, p.RIGHT, p.TOP, p.BOTTOM, 0.299
 
 n = 7
 
@@ -110,11 +110,11 @@ for page in range(n):
         
         x, y = r-3, h*(i-n/2)
         
-        # create links
-        p.pagelink(r-8, r, y+h*0.05, y+h*0.95, n-i)
-
         # display text
         p.vtext(x, y+6, txt)
+
+        # create links
+        p.pagelink(r-8, r, y+h*0.05, y+h*0.95, n-i)
 
     # p.rgbcolor(*hexcolor("c8c8de"))
     # p.thickness(w)

@@ -565,7 +565,7 @@ class document():
         /Rect [{sca(l, b)} {sca(r, t)}]
         {border}
         /Page {page}
-        /View [/XYZ 0 {h} null]
+        /View [/XYZ 0 {fix(h)} null]
         /Subtype /Link /ANN pdfmark
         '''
         # export text
@@ -579,3 +579,4 @@ if __name__ == "__main__":
     p.displayCrosshair()
 
     # done
+
