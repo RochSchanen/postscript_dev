@@ -7,7 +7,12 @@
 # packages:
 # comment:
 
-# set debug flags to verbose
+# modify DEBUG to _DEBUG
+# modify debug to _debug
+# modify EOL to _EOL
+# modify SPC to _SPC
+
+# set debug verbose flags
 DEBUG = [
     # "NONE",
     "ALL",
@@ -128,6 +133,7 @@ class document():
         # parse user size (for example "200x300")
         if "x" in Size.lower():
             w, h = (float(s) for s in Size.split("x"))
+            # test: w, h = (float(s) for s in Size.lower.split("x"))
             
         # check parsing result
         if (w, h) == (None, None):
@@ -335,7 +341,7 @@ class document():
     #############
 
     def hline(self, Position = 0.0, lm = 0, rm = 0):
-        # l, r margins are null by default
+        # lm, rm margins are null by default
         # get geometry
         w, h = self.size
         # convert position to string
@@ -352,7 +358,7 @@ class document():
         return
 
     def vline(self, Position = 0.0, tm = 0, bm = 0):
-        # t, b margins are null by default
+        # tm, bm margins are null by default
         # get geometry
         w, h = self.size
         # convert position to string
@@ -572,6 +578,46 @@ class document():
         self.write(BLOCK)
         # done
         return                
+
+    #############
+    ### SEYES ###
+    #############
+
+    ### DRAW A SEYES PAGE ###
+    def seyespage(p, lm, tm, vn, hn):
+
+        # lm is the left margin position (red vertical line)
+        # tm is the top margin (space above the first horizontal line)
+        # vn is the number of vertical lines (minus the red vertical line)
+        # hn is the number of thick horizontal lines
+
+        # color for all grids
+        p.rgbcolor(*hexcolor("c8c8de"))
+
+        # thickness for sub grid
+        p.thickness(0.199)
+
+        # horizontal sub grid
+        y0, n = p.TOP - tm, 4*hn + 2
+        p.hgrid(y0, y0 - 2*(n-1), n)
+
+        # thickness for main grids and vertical left margin
+        p.thickness(0.398)
+
+        # horizontal main grid
+        y0, n = p.TOP - tm - 3*2, hn
+        p.hgrid(y0, y0 - 8*(n-1), n)
+
+        # vertical main grid
+        x0, n = p.LEFT + lm + 8, vn
+        p.vgrid(x0, x0 + 8*(n-1), n)
+        
+        # vertical left margin color
+        p.rgbcolor(*hexcolor("f6bbcf"))
+        p.vline(p.LEFT + lm)
+
+        # done
+        return
 
 if __name__ == "__main__":
 

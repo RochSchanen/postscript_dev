@@ -1,5 +1,5 @@
 #!/bin/bash
-python3 DoubleSidedSeyes.py
+python3 seyes.py
 # gs -sOutputFile=$1.pdf -dNOPAUSE -dBATCH -sPAPERSIZE=a5 -sDEVICE=pdfwrite -dSAFER $1.ps
 # cp p.pdf "/home/roch/Dropbox/Tranfer Remarkable/p.pdf"
 gs -sOutputFile=tmp.pdf -dNOPAUSE -dBATCH -sPAPERSIZE=a5 -dAutoRotatePages=/None -sDEVICE=pdfwrite -dSAFER tmp.ps
