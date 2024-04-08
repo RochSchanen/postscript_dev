@@ -1,37 +1,32 @@
 # file: seyes.py
 
-from postscript.postscript import exitProcess
-from postscript.postscript import hexcolor
-from postscript.postscript import document
-    
-# def page_number(n):
-#     # display page number
-#     p.text(r-5, t-6, f"{n}")
-#     # done
-#     return
+# import tool 
 
-# # import tool 
-# from postscript.postscript import sca
+def border(p, m, w):
 
-# def page_border(m, w):
-#     lm, rm, tm, bm = 0, 0, 0.3, 0
-#     # define  block
-#     BLOCK = f'''
-#     % --- CURVE BREAK ---
-#     {sca(l+w+lm, t-w-tm)} moveto
-#     {sca(l+w+lm, b+w+bm)} lineto
-#     {sca(r-m, b+w+bm)} lineto
-#     {sca(r-m/2, b+w+bm, r-w-rm, b+m/2, r-w-rm, b+m)} curveto
-#     {sca(r-w-rm, t-m)} lineto
-#     {sca(r-w-rm, t-m/2, r-m/2, t-w-tm, r-m, t-w-tm)} curveto
-#     {sca(l+w+lm, t-w-tm)} lineto
-#     closepath
-#     stroke
-#     '''
-#     # export text
-#     p.write(BLOCK)
-#     # done
-#     return
+    from postscript.postscript import sca
+
+    lm, rm, tm, bm = 0.0, 0.0, 0.3, 0.0
+
+    l, r, t, b = p.LEFT, p.RIGHT, p.TOP, p.BOTTOM
+
+    # define  block
+    BLOCK = f'''
+    % --- CURVE BREAK ---
+    {sca(l+w+lm, t-w-tm)} moveto
+    {sca(l+w+lm, b+w+bm)} lineto
+    {sca(r-m, b+w+bm)} lineto
+    {sca(r-m/2, b+w+bm, r-w-rm, b+m/2, r-w-rm, b+m)} curveto
+    {sca(r-w-rm, t-m)} lineto
+    {sca(r-w-rm, t-m/2, r-m/2, t-w-tm, r-m, t-w-tm)} curveto
+    {sca(l+w+lm, t-w-tm)} lineto
+    closepath
+    stroke
+    '''
+    # export text
+    p.write(BLOCK)
+    # done
+    return
 
 # def rightIndent(pos, w, h):
 #     # define  block
@@ -48,22 +43,28 @@ from postscript.postscript import document
 #     return
 
 
+from postscript.postscript import document
 p = document("./tmp", Size = "A5", Type = "ps")
 
+# p.rgbcolor(*hexcolor("c8c8de"))
+# p.thickness(0.199)
+# rightholes(p) if page % 2 else leftholes(p)
 
-def leftholes(p):
-    # left
-    p.circle(p.LEFT + 9.0, p.TOP - 55.75, 2.5)
-    p.circle(p.LEFT + 9.0, p.TOP -154.75, 2.5)
-    # done
-    return
+# def leftholes(p):
+#     # left
+#     p.circle(p.LEFT + 9.0, p.TOP - 55.75, 2.5)
+#     p.circle(p.LEFT + 9.0, p.TOP -154.75, 2.5)
+#     # done
+#     return
 
-def rightholes(p):
-    # left
-    p.circle(p.LEFT + 9.0, p.TOP - 55.75, 2.5)
-    p.circle(p.LEFT + 9.0, p.TOP -154.75, 2.5)
-    # done
-    return
+# def rightholes(p):
+#     # left
+#     p.circle(p.RIGHT - 9.0, p.TOP - 55.75, 2.5)
+#     p.circle(p.RIGHT - 9.0, p.TOP -154.75, 2.5)
+#     # done
+#     return
+
+from postscript.postscript import hexcolor
 
 n = 2
 
@@ -77,6 +78,10 @@ for page in range(n):
         15, # 13 vertical main lines
         22, # 22 horizontal main lines
         )
+
+    p.thickness(0.099)
+    p.rgbcolor(*hexcolor("c8c8de"))
+    border(p, 6, 0.099)
 
     # p.thickness(w)
     # p.rgbcolor(*hexcolor("c8c8de"))
@@ -103,10 +108,7 @@ for page in range(n):
     #     # create links
     #     p.pagelink(r-8, r, y+h*0.05, y+h*0.95, n-i)
 
-    p.rgbcolor(*hexcolor("c8c8de"))
-    p.thickness(0.199)
-    leftholes(p)
-
 # p.graycolor(1.0)
 
+from postscript.postscript import exitProcess
 exitProcess("end-of-code.")
