@@ -1,12 +1,12 @@
 #!/usr/bin/python3
 # file: postscript.py
-# content: homemade postscript package
-# date: 2023 10 13
 # author: Roch Schanen
+# created: 2023 10 13
+# content: homemade postscript package
 # repository: https://github.com/RochSchanen/postscript_dev
-# packages:
-# comment:
+# comment: early stages of development
 
+# to do:
 # modify DEBUG to _DEBUG
 # modify debug to _debug
 # modify EOL to _EOL
@@ -15,7 +15,7 @@
 # set debug verbose flags
 DEBUG = [
     # "NONE",
-    "ALL",
+    # "ALL",
     # "SHOW_SIZE",
     ]
 
@@ -115,7 +115,7 @@ class document():
 
     # open file, write header, setup font, and fix the origin
     def __init__(self,
-            Path    = "out",  # default filename
+            Path    = "p",  # default filename
             Size    = "A4", # default page size
             Type    = "ps", # ps or eps
         ):
@@ -550,10 +550,7 @@ class document():
         self.write(BLOCK)
         # done
         return                
-
-    # there is some issue with the paper
-    # orientation after using 'vtext()'.
-    # should I use 'stroke' or not?
+        # should I use 'stroke' or not? (7 lines above)           !!!
 
     ############
     ### META ###

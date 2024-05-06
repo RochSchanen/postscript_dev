@@ -1,5 +1,5 @@
 .gitattributes
-.output
+.outputs
 .local
 
 build
@@ -7,4 +7,3 @@ postscript.egg-info
 
 *.pyc
 *.npy
-
