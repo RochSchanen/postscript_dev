@@ -1,4 +1,4 @@
 #!/bin/bash
-python3 OnePageSeyes.py
+python3 lexiqueSeyes.py
 gs -sOutputFile=p.pdf -dNOPAUSE -dBATCH -sPAPERSIZE=a5 -dAutoRotatePages=/None -sDEVICE=pdfwrite -dSAFER p.ps
 # cp p.pdf "destinationfolder/p.pdf"

@@ -11,7 +11,7 @@ def border(p, m, w):
     # w is the line width
     # m is the corner radius
 
-    from postscript.postscript import sca
+    from pslib.postscript import sca
 
     # corrective values
     lm, rm, tm, bm = 0.0, 0.0, 0.3, 0.0
@@ -45,10 +45,11 @@ def leftholes(p):
 
 ############################## MAIN ##############################
 
-from postscript.postscript import document
-from postscript.postscript import hexcolor
+from pslib.postscript import document
+from pslib.postscript import hexcolor
 
 p = document(Size = "A5")
+
 p.seyespage(20, 20, 15, 22) # narrow margin
 
 p.rgbcolor(*hexcolor("c8c8de"))

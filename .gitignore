@@ -3,7 +3,7 @@
 .local
 
 build
-postscript.egg-info
+pslib.egg-info
 
 *.pyc
 *.npy

@@ -1,3 +1,4 @@
+
 #!/usr/bin/python3
 # file: postscript.py
 # author: Roch Schanen
@@ -519,7 +520,7 @@ class document():
     ### TEXT ###
     ############
 
-    def text(self, x, y, txt):
+    def htext(self, x, y, txt):
         # define  block
         BLOCK = f'''
         % --- TEXT ---
@@ -531,9 +532,6 @@ class document():
         self.write(BLOCK)
         # done
         return                
-
-    def htext(self, x, y, txt):
-        return self.text(x, y, txt)
 
     def vtext(self, x, y, txt):
         # define  block
