@@ -1,6 +1,7 @@
 README
 
-Magnetic Field Calculator
+Simple Postscript generator
 ---
 
-Based on Biot-Savart integration.
+mini library to generate postscript files.
+motivation is the generation of template documents, calendars, and the like.
